@@ -17,6 +17,10 @@ class Config(object):
         return self.conf_dict['uuid_file']
 
     @property
+    def uuid_html(self):
+        return self.conf_dict['uuid_html']
+
+    @property
     def uuid(self):
         if self._uuid is None:
             ufile = open(self.uuid_file)

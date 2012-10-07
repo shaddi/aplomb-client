@@ -6,6 +6,7 @@ Tasks for client auth:
 - (probably not actually this code) Run a web service to allow user to log in with username/password to begin first-run.
 """
 
+import os
 import uuid
 
 import requests
@@ -16,9 +17,16 @@ import config
 conf = config.Config()
 
 def set_uuid():
-    f = open(conf.uuid_file, "w")
-    f.write(str(uuid.uuid4()))
-    f.close()
+    if not os.path.exists(conf.uuid_file):
+        f = open(conf.uuid_file, "w")
+        uuid_ = uuid.uuid4()
+        f.write(str(uuid_))
+        f.close()
+
+    if not os.path.exists(conf.uuid_html):
+        f = open(conf.uuid_html, "w")
+        f.write("<html><head><title>Welcome to APLOMB!</title></head><body><center><h1>Welcome to APLOMB!</h1><br /><h2>This client's UUID is %s.</h2></center></body></html>" % conf.uuid)
+        f.close()
 
 def gen_key_and_csr(conf_file=conf.openssl_conf, key_name="aplomb-private.key", csr_name="aplomb-csr.csr"):
     openssl_cmd_str = "openssl req -out %s -new -newkey rsa:2048 -nodes -keyout %s -config %s" % (csr_name, key_name, conf_file)
