@@ -29,6 +29,8 @@ def set_uuid():
         f.write("<html><head><title>Welcome to APLOMB!</title></head><body><center><h1>Welcome to APLOMB!</h1><br /><h2>This client's UUID is %s.</h2></center></body></html>" % conf.uuid)
         f.close()
 
+    return uuid_
+
 def gen_key_and_csr(conf_file=conf.openssl_conf, key_name="aplomb-private.key", csr_name="aplomb-csr.csr"):
     openssl_cmd_str = "openssl req -out %s -new -newkey rsa:2048 -nodes -keyout %s -config %s" % (csr_name, key_name, conf_file)
     r = requests.get("%s/sslconf" % conf.conf_server, params={"uuid": conf.uuid})
@@ -61,7 +63,11 @@ def get_csr_signed(csr_file):
         f.close()
     return r.status_code
 
-def get_cert_loop():
+def main():
+    # get uuid
+    uuid_ = set_uuid()
+    print "This client's ID is: %s" % uuid_
+
     while True:
         try:
             if gen_key_and_csr() == 200:
@@ -90,5 +96,4 @@ def get_cert_loop():
     print "Keys generated!"
 
 if __name__ == "__main__":
-    set_uuid()
-    get_cert_loop()
+    main()
