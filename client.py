@@ -7,6 +7,7 @@ Tasks for client auth:
 """
 
 import os
+import time
 import uuid
 
 import requests
@@ -31,6 +32,7 @@ def set_uuid():
 def gen_key_and_csr(conf_file=conf.openssl_conf, key_name="aplomb-private.key", csr_name="aplomb-csr.csr"):
     openssl_cmd_str = "openssl req -out %s -new -newkey rsa:2048 -nodes -keyout %s -config %s" % (csr_name, key_name, conf_file)
     r = requests.get("%s/sslconf" % conf.conf_server, params={"uuid": conf.uuid})
+    http_status = r.status_code
     if r.status_code == 200:
         f = open(conf_file, "w")
         f.write(r.content)
@@ -39,6 +41,8 @@ def gen_key_and_csr(conf_file=conf.openssl_conf, key_name="aplomb-private.key", 
         r = envoy.run(openssl_cmd_str)
         if r.status_code != 0:
             raise Exception
+
+    return http_status
 
 
 def get_csr_signed(csr_file):
@@ -55,8 +59,36 @@ def get_csr_signed(csr_file):
         f = open(conf.client_crt, "w")
         f.write(r.content)
         f.close()
+    return r.status_code
+
+def get_cert_loop():
+    while True:
+        try:
+            if gen_key_and_csr() == 200:
+                break
+            else:
+                print "Bad response. Maybe UUID isn't registered?"
+        except requests.exceptions.ConnectionError:
+            print "Couldn't connect! Retrying..."
+        except:
+            print "Problem with OpenSSL! Aborting."
+        time.sleep(15) # wait 15 seconds
+
+    print "Generated key and CSR!"
+    while True:
+        try:
+            if get_csr_signed("aplomb-csr.csr") == 200:
+                break
+            else:
+                print "Bad response. Retrying..."
+        except requests.exceptions.ConnectionError:
+            print "Couldn't connect! Retrying..."
+        except:
+            print "Problem with OpenSSL! Aborting."
+        time.sleep(15) # wait 15 seconds
+
+    print "Keys generated!"
 
 if __name__ == "__main__":
     set_uuid()
-    gen_key_and_csr()
-    get_csr_signed("aplomb-csr.csr")
+    get_cert_loop()
