@@ -1,0 +1,7 @@
+Client scripts for APLOMB.
+
+Currently negotiates with the APLOMB API to generate client UUID and keys.
+
+TODO:
+    - Obtain list of APLOMB cloud endpoints and pick amongst them
+    - Actually start the tunnel
